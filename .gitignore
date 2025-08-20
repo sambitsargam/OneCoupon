@@ -5,6 +5,9 @@ node_modules/
 dist/
 build/
 
+# Move build artifacts
+move/build/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
-import { networkConfig } from './config/network';
+import { SuiClientProvider, WalletProvider } from '@onelabs/dapp-kit';
+
 import Header from './components/Header';
 import MerchantTab from './components/MerchantTab';
 import MyCouponsTab from './components/MyCouponsTab';
 import FaucetTab from './components/FaucetTab';
 import ActivityTab from './components/ActivityTab';
+import { networkConfig } from './config/network';
+
 import './App.css';
 
 const queryClient = new QueryClient();
