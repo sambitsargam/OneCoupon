@@ -5,7 +5,6 @@ const NetworkDebug: React.FC = () => {
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const [chainId, setChainId] = React.useState<string>('');
-  const [rpcUrl, setRpcUrl] = React.useState<string>('');
 
   React.useEffect(() => {
     const checkNetwork = async () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClientQuery } from '@onelabs/dapp-kit';
 import { Transaction } from '@onelabs/sui/transactions';
 
@@ -44,7 +44,17 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
   );
 
   const merchantObjects = ownedObjects?.data || [];
-  const hasMerchant = merchantObjects.length > 0;
+
+  // Reset merchantCreated state when merchant objects are loaded
+  useEffect(() => {
+    if (merchantCreated && merchantObjects.length > 0) {
+      // Small delay to show the success message briefly
+      const timer = setTimeout(() => {
+        setMerchantCreated(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [merchantCreated, merchantObjects.length]);
 
   const generateRandomCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
