@@ -53,9 +53,8 @@ function App() {
       >
         <WalletProvider 
           autoConnect={false}
-          stashedWallet={{
-            name: 'OneChain Wallet'
-          }}
+          enableUnsafeBurner={false}
+          preferredWallets={["OneChain Wallet", "OneLabs Wallet"]}
         >
           {showLanding ? (
             <LandingPage onGetStarted={handleGetStarted} />
