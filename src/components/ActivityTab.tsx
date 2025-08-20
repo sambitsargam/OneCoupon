@@ -163,7 +163,7 @@ const ActivityTab: React.FC = () => {
                       color: parseInt(change.amount) > 0 ? '#059669' : '#dc2626',
                       fontFamily: 'monospace'
                     }}>
-                      {parseInt(change.amount) > 0 ? '+' : ''}{(parseInt(change.amount) / 1_000_000_000).toFixed(6)} ONE
+                      {parseInt(change.amount) > 0 ? '+' : ''}{(parseInt(change.amount) / 1_000_000_000).toFixed(6)} OCT
                     </p>
                   ))}
                 </div>

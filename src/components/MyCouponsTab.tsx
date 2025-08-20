@@ -186,7 +186,7 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
             <p>Discount: {(selectedCoupon.valueBps / 100).toFixed(2)}%</p>
             
             <div className="form-group">
-              <label className="form-label">Order Total (ONE)</label>
+              <label className="form-label">Order Total (OCT)</label>
               <input
                 type="number"
                 className="form-input"
@@ -205,10 +205,10 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
                 marginBottom: '1rem'
               }}>
                 <p style={{ fontSize: '0.875rem', color: '#dc2626', marginBottom: '0.5rem' }}>
-                  Discount: {((parseFloat(orderTotal) * selectedCoupon.valueBps) / 10000).toFixed(3)} ONE
+                  Discount: {((parseFloat(orderTotal) * selectedCoupon.valueBps) / 10000).toFixed(3)} OCT
                 </p>
                 <p style={{ fontSize: '0.875rem', color: '#059669', marginBottom: '0.5rem' }}>
-                  Final Total: {(parseFloat(orderTotal) - (parseFloat(orderTotal) * selectedCoupon.valueBps) / 10000).toFixed(3)} ONE
+                  Final Total: {(parseFloat(orderTotal) - (parseFloat(orderTotal) * selectedCoupon.valueBps) / 10000).toFixed(3)} OCT
                 </p>
               </div>
             )}

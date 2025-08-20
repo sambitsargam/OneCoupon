@@ -12,7 +12,7 @@ const FaucetTab: React.FC = () => {
     'getBalance',
     {
       owner: currentAccount?.address ?? '',
-      coinType: '0x2::one::ONE' // OneChain native token instead of SUI
+      coinType: '0x2::oct::OCT' // OneChain testnet token
     },
     {
       enabled: !!currentAccount?.address
@@ -77,7 +77,7 @@ const FaucetTab: React.FC = () => {
   };
 
   const formatBalance = (balance: string) => {
-    const num = parseFloat(balance) / 1_000_000_000; // Convert from MIST to ONE tokens
+    const num = parseFloat(balance) / 1_000_000_000; // Convert from MIST to OCT tokens
     return num.toFixed(6);
   };
 
@@ -93,7 +93,7 @@ const FaucetTab: React.FC = () => {
   return (
     <div className="card">
       <h2>OneChain Testnet Faucet</h2>
-      <p>Get free ONE tokens for testing on OneChain Testnet</p>
+      <p>Get free OCT tokens for testing on OneChain Testnet</p>
       
       <div style={{ 
         background: '#f8fafc', 
@@ -103,7 +103,7 @@ const FaucetTab: React.FC = () => {
       }}>
         <h3 style={{ margin: '0 0 0.5rem 0' }}>Current Balance</h3>
         <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 'bold' }}>
-          {balance ? formatBalance(balance.totalBalance) : '0.000000'} ONE
+          {balance ? formatBalance(balance.totalBalance) : '0.000000'} OCT
         </p>
         <p style={{ margin: '0.25rem 0 0 0', color: '#6b7280', fontSize: '0.875rem' }}>
           Address: {currentAccount.address.slice(0, 6)}...{currentAccount.address.slice(-4)}
@@ -113,7 +113,7 @@ const FaucetTab: React.FC = () => {
       <div style={{ marginBottom: '1.5rem' }}>
         <h3>Faucet Information</h3>
         <ul style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-          <li>Each request provides 1 ONE for testing</li>
+          <li>Each request provides 1 OCT for testing</li>
           <li>Rate limit: 1 request per minute per address</li>
           <li>Testnet tokens have no real value</li>
           <li>Use tokens to test coupon creation and redemption</li>
