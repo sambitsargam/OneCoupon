@@ -51,10 +51,30 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
       // Small delay to show the success message briefly
       const timer = setTimeout(() => {
         setMerchantCreated(false);
-      }, 2000);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [merchantCreated, merchantObjects.length]);
+
+  // Add polling effect to periodically check for merchant objects after creation
+  useEffect(() => {
+    if (merchantCreated && merchantObjects.length === 0) {
+      const interval = setInterval(() => {
+        console.log('Polling for merchant objects...');
+        refetchObjects();
+      }, 3000); // Poll every 3 seconds
+
+      // Stop polling after 30 seconds
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+      }, 30000);
+
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
+    }
+  }, [merchantCreated, merchantObjects.length, refetchObjects]);
 
   const generateRandomCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -86,7 +106,14 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
           onSuccess: (result) => {
             setResult(`Merchant created successfully! Transaction: ${result.digest}`);
             setMerchantCreated(true); // Update local state immediately
-            refetchObjects(); // Refresh the merchant objects
+            
+            // Immediate refetch
+            refetchObjects();
+            
+            // Additional refetches with delays to catch the blockchain state
+            setTimeout(() => refetchObjects(), 2000);
+            setTimeout(() => refetchObjects(), 5000);
+            setTimeout(() => refetchObjects(), 10000);
           },
           onError: (error) => {
             console.error('Merchant creation failed:', error);
@@ -256,11 +283,27 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
             padding: '1rem', 
             borderRadius: '0.375rem',
             background: '#f0fdf4',
-            color: '#166534'
+            color: '#166534',
+            marginBottom: '1rem'
           }}>
             {result}
           </div>
         )}
+
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => refetchObjects()}
+          >
+            Check Again
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => setMerchantCreated(false)}
+          >
+            Continue Anyway
+          </button>
+        </div>
       </div>
     );
   }
