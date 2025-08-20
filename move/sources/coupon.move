@@ -1,12 +1,11 @@
 /// OneCoupon - Tokenized retail coupons on OneChain
 /// E-commerce partners can issue on-chain coupons; users hold them in wallets and redeem at checkout
 module onecoupon::coupon {
-    use sui::object::{Self, UID};
-    use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
-    use sui::clock::{Self, Clock};
-    use sui::event;
-    use std::option::{Self, Option};
+    use one::object::{Self, UID};
+    use one::transfer;
+    use one::tx_context::{Self, TxContext};
+    use one::clock::{Self, Clock};
+    use one::event;
     
     // ======== Constants ========
     
@@ -29,13 +28,13 @@ module onecoupon::coupon {
     // ======== Structs ========
     
     /// Represents a merchant that can issue coupons
-    struct Merchant has key {
+    public struct Merchant has key {
         id: UID,
         admin: address,
     }
     
     /// Represents a tokenized coupon
-    struct Coupon has key, store {
+    public struct Coupon has key, store {
         id: UID,
         merchant: address,
         owner: address,
@@ -48,7 +47,7 @@ module onecoupon::coupon {
     
     // ======== Events ========
     
-    struct CouponIssued has copy, drop {
+    public struct CouponIssued has copy, drop {
         coupon_id: address,
         merchant: address,
         owner: address,
@@ -58,7 +57,7 @@ module onecoupon::coupon {
         expires_at_ms: u64,
     }
     
-    struct CouponRedeemed has copy, drop {
+    public struct CouponRedeemed has copy, drop {
         coupon_id: address,
         merchant: address,
         owner: address,
@@ -67,13 +66,13 @@ module onecoupon::coupon {
         uses_remaining: u8,
     }
     
-    struct CouponExpired has copy, drop {
+    public struct CouponExpired has copy, drop {
         coupon_id: address,
         merchant: address,
         owner: address,
     }
     
-    struct MerchantCreated has copy, drop {
+    public struct MerchantCreated has copy, drop {
         merchant_id: address,
         admin: address,
     }
@@ -137,7 +136,7 @@ module onecoupon::coupon {
     }
     
     /// Transfer coupon to a new owner
-    public entry fun transfer_to(coupon: Coupon, new_owner: address) {
+    public entry fun transfer_to(mut coupon: Coupon, new_owner: address) {
         coupon.owner = new_owner;
         transfer::public_transfer(coupon, new_owner);
     }
@@ -148,7 +147,7 @@ module onecoupon::coupon {
         order_total_oct: u64,
         clock: &Clock,
         ctx: &mut TxContext
-    ): (u64, Option<Coupon>) {
+    ) {
         // Verify ownership
         assert!(tx_context::sender(ctx) == coupon.owner, ENotOwner);
         
@@ -178,10 +177,27 @@ module onecoupon::coupon {
         if (coupon.used == coupon.max_uses) {
             let Coupon { id, merchant: _, owner: _, code: _, value_bps: _, max_uses: _, used: _, expires_at_ms: _ } = coupon;
             object::delete(id);
-            (discount_oct, option::none())
         } else {
-            (discount_oct, option::some(coupon))
+            let owner = coupon.owner;
+            transfer::public_transfer(coupon, owner);
         }
+    }
+    
+    /// Calculate discount for a coupon (view function for frontend)
+    public fun calculate_discount(
+        coupon: &Coupon,
+        order_total_oct: u64,
+        clock: &Clock
+    ): u64 {
+        // Check expiry
+        let current_time = clock::timestamp_ms(clock);
+        assert!(current_time < coupon.expires_at_ms, ECouponExpired);
+        
+        // Check remaining uses
+        assert!(coupon.used < coupon.max_uses, ECouponExhausted);
+        
+        // Calculate discount
+        (order_total_oct * (coupon.value_bps as u64)) / (MAX_BPS as u64)
     }
     
     // ======== View functions ========

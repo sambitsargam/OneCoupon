@@ -7,21 +7,28 @@ echo "🚀 Publishing OneCoupon Move package to OneChain Testnet..."
 
 cd move
 
+# Check if OneChain CLI is installed
+if ! command -v one &> /dev/null; then
+    echo "❌ OneChain CLI not found. Please install it first:"
+    echo "   cargo install --locked --git https://github.com/one-chain-labs/onechain.git one_chain --features tracing"
+    exit 1
+fi
+
 # Check if we have a gas object
 echo "⛽ Checking gas balance..."
-sui client gas --json > /tmp/gas_check.json || {
+one client gas --json > /tmp/gas_check.json || {
     echo "❌ No gas objects found. Please get testnet tokens first:"
-    echo "   sui client faucet"
+    echo "   one client faucet"
     exit 1
 }
 
 # Build before publishing
 echo "📦 Building package..."
-sui move build
+one move build
 
 # Publish to testnet
 echo "🌐 Publishing to testnet..."
-PUBLISH_OUTPUT=$(sui client publish --gas-budget 100000000 --json)
+PUBLISH_OUTPUT=$(one client publish --gas-budget 100000000 --json)
 
 # Extract package ID from output
 PACKAGE_ID=$(echo "$PUBLISH_OUTPUT" | jq -r '.objectChanges[] | select(.type == "published") | .packageId')
