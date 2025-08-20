@@ -171,7 +171,7 @@ const ActivityTab: React.FC = () => {
 
               {/* View on explorer button */}
               <button
-                onClick={() => window.open(`https://onescan.cc/txblock/${tx.digest}`, '_blank')}
+                onClick={() => window.open(`https://onescan.cc/testnet/transactionBlocksDetail?digest=${tx.digest}`, '_blank')}
                 style={{
                   marginTop: '0.5rem',
                   padding: '0.25rem 0.75rem',

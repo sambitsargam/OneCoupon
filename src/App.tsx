@@ -10,9 +10,19 @@ import MyCouponsTab from './components/MyCouponsTab';
 import FaucetTab from './components/FaucetTab';
 import ActivityTab from './components/ActivityTab';
 import NetworkDebug from './components/NetworkDebug';
-import { networkConfig } from './config/network';
 
 import './App.css';
+
+// OneChain network configuration
+const networkConfig = {
+  'onechain-testnet': { 
+    url: 'https://rpc-testnet.onelabs.cc',
+    variables: {
+      chainName: 'OneChain Testnet',
+      chainId: '0x1',
+    },
+  },
+};
 
 const queryClient = new QueryClient();
 
@@ -45,9 +55,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SuiClientProvider 
-        networks={networkConfig.networkConfig} 
+        networks={networkConfig} 
         defaultNetwork="onechain-testnet"
-        onNetworkChange={(network) => {
+        onNetworkChange={(network: string) => {
           console.log('Network changed to:', network);
         }}
       >
