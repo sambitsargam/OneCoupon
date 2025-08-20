@@ -13,10 +13,7 @@ const NetworkDebug: React.FC = () => {
           // Get chain identifier
           const chainIdentifier = await suiClient.getChainIdentifier();
           setChainId(chainIdentifier);
-          
-          // Get RPC URL from the client
-          const url = (suiClient as any).options?.url || 'Unknown';
-          setRpcUrl(url);
+        
           
           console.log('=== NETWORK DEBUG ===');
           console.log('Chain ID:', chainIdentifier);
