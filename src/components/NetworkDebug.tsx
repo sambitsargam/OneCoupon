@@ -21,7 +21,6 @@ const NetworkDebug: React.FC = () => {
           
           console.log('=== NETWORK DEBUG ===');
           console.log('Chain ID:', chainIdentifier);
-          console.log('RPC URL:', url);
           console.log('Connected Account:', currentAccount?.address);
           console.log('==================');
         } catch (error) {
@@ -53,7 +52,6 @@ const NetworkDebug: React.FC = () => {
     }}>
       <div><strong>Network Debug</strong></div>
       <div>Chain ID: {chainId || 'Loading...'}</div>
-      <div>RPC: {rpcUrl}</div>
       <div>Wallet: {currentAccount ? 'Connected' : 'Not connected'}</div>
       {currentAccount && (
         <div>Address: {currentAccount.address.slice(0, 10)}...</div>

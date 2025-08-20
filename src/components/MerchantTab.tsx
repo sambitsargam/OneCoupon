@@ -20,6 +20,7 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [merchantCreating, setMerchantCreating] = useState(false);
+  const [merchantCreated, setMerchantCreated] = useState(false);
 
   // Package ID from environment
   const packageId = import.meta.env.VITE_PACKAGE_ID;
@@ -74,6 +75,7 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
         {
           onSuccess: (result) => {
             setResult(`Merchant created successfully! Transaction: ${result.digest}`);
+            setMerchantCreated(true); // Update local state immediately
             refetchObjects(); // Refresh the merchant objects
           },
           onError: (error) => {
@@ -174,7 +176,7 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
   }
 
   // If no merchant account exists, show merchant creation
-  if (merchantObjects.length === 0) {
+  if (merchantObjects.length === 0 && !merchantCreated) {
     return (
       <div className="card">
         <h2>Create Merchant Account</h2>
@@ -210,6 +212,41 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
             borderRadius: '0.375rem',
             background: result.includes('success') ? '#f0fdf4' : '#fef2f2',
             color: result.includes('success') ? '#166534' : '#dc2626'
+          }}>
+            {result}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Show transition message if merchant was just created but blockchain hasn't updated yet
+  if (merchantCreated && merchantObjects.length === 0) {
+    return (
+      <div className="card">
+        <h2>Merchant Account Created!</h2>
+        <div style={{ 
+          background: '#f0fdf4', 
+          padding: '1rem', 
+          borderRadius: '0.5rem', 
+          marginBottom: '1.5rem',
+          border: '1px solid #bbf7d0'
+        }}>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#166534' }}>✅ Success!</h3>
+          <p style={{ margin: '0.5rem 0', color: '#065f46' }}>
+            Your merchant account has been created successfully. The coupon issuance form will appear shortly.
+          </p>
+          <p style={{ margin: '0.5rem 0', color: '#065f46', fontSize: '0.875rem' }}>
+            Waiting for blockchain confirmation...
+          </p>
+        </div>
+
+        {result && (
+          <div style={{ 
+            padding: '1rem', 
+            borderRadius: '0.375rem',
+            background: '#f0fdf4',
+            color: '#166534'
           }}>
             {result}
           </div>
