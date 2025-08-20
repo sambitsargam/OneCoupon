@@ -47,21 +47,23 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
   );
 
   // Parse coupon data from blockchain objects
-  const coupons: Coupon[] = (ownedObjects?.data || []).map((obj: any) => {
-    const fields = obj.data?.content?.fields;
-    if (!fields) return null;
-    
-    return {
-      id: obj.data.objectId,
-      code: new TextDecoder().decode(new Uint8Array(fields.code)),
-      valueBps: parseInt(fields.value_bps),
-      maxUses: parseInt(fields.max_uses),
-      used: parseInt(fields.used),
-      expiresAt: parseInt(fields.expires_at_ms),
-      merchant: fields.merchant,
-      owner: fields.owner
-    };
-  }).filter(Boolean);
+  const coupons: Coupon[] = (ownedObjects?.data || [])
+    .map((obj: any) => {
+      const fields = obj.data?.content?.fields;
+      if (!fields) return null;
+      
+      return {
+        id: obj.data.objectId,
+        code: new TextDecoder().decode(new Uint8Array(fields.code)),
+        valueBps: parseInt(fields.value_bps),
+        maxUses: parseInt(fields.max_uses),
+        used: parseInt(fields.used),
+        expiresAt: parseInt(fields.expires_at_ms),
+        merchant: fields.merchant,
+        owner: fields.owner
+      };
+    })
+    .filter((coupon): coupon is Coupon => coupon !== null);
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -91,10 +93,6 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
     }
   };
 
-  const executeRedeem = async () => {
-    await redeemCoupon();
-  };
-
   const handleRedeem = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
     setResult(null); // Clear previous results
@@ -108,30 +106,6 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
       </div>
     );
   }
-
-  // Mock data for demonstration (remove when real data is available)
-  const mockCoupons: Coupon[] = coupons.length > 0 ? coupons : [
-    {
-      id: '0x123...',
-      code: 'SAVE20',
-      valueBps: 2000,
-      maxUses: 1,
-      used: 0,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now
-      merchant: '0xabc...',
-      owner: currentAccount?.address || ''
-    },
-    {
-      id: '0x456...',
-      code: 'WELCOME10',
-      valueBps: 1000,
-      maxUses: 3,
-      used: 1,
-      expiresAt: Date.now() - 24 * 60 * 60 * 1000, // 1 day ago (expired)
-      merchant: '0xdef...',
-      owner: currentAccount?.address || ''
-    }
-  ];
 
   const redeemCoupon = async () => {
     if (!selectedCoupon || !currentAccount || !packageId || !orderTotal) {
@@ -184,11 +158,11 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
         <h2>My Coupons</h2>
         <p>Manage and redeem your tokenized coupons</p>
         
-        {mockCoupons.length === 0 ? (
+        {coupons.length === 0 ? (
           <p>No coupons found. Get some coupons from merchants!</p>
         ) : (
           <div style={{ display: 'grid', gap: '1rem' }}>
-            {mockCoupons.map((coupon) => {
+            {coupons.map((coupon) => {
               const status = getCouponStatus(coupon);
               return (
                 <div 
@@ -227,6 +201,19 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Result Display */}
+        {result && (
+          <div style={{
+            padding: '1rem',
+            marginTop: '1rem',
+            borderRadius: '0.375rem',
+            background: result.includes('failed') || result.includes('Error') ? '#fee2e2' : '#dcfce7',
+            color: result.includes('failed') || result.includes('Error') ? '#dc2626' : '#059669'
+          }}>
+            {result}
           </div>
         )}
       </div>
@@ -286,10 +273,10 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
               </button>
               <button
                 className="btn btn-primary"
-                onClick={executeRedeem}
-                disabled={!orderTotal}
+                onClick={redeemCoupon}
+                disabled={redeeming || !orderTotal || parseFloat(orderTotal) <= 0}
               >
-                Confirm Redeem
+                {redeeming ? 'Redeeming...' : 'Confirm Redeem'}
               </button>
             </div>
           </div>
