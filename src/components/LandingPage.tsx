@@ -233,7 +233,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
           <a href="https://github.com/sambitsargam/OneCoupon" target="_blank" rel="noopener noreferrer">
             View Source Code
           </a>
-          <a href="https://onescan.cc" target="_blank" rel="noopener noreferrer">
+          <a href="https://onescan.cc/testnet" target="_blank" rel="noopener noreferrer">
             OneChain Explorer
           </a>
         </div>

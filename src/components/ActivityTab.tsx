@@ -163,7 +163,7 @@ const ActivityTab: React.FC = () => {
                       color: parseInt(change.amount) > 0 ? '#059669' : '#dc2626',
                       fontFamily: 'monospace'
                     }}>
-                      {parseInt(change.amount) > 0 ? '+' : ''}{(parseInt(change.amount) / 1_000_000_000).toFixed(6)} OCT
+                      {parseInt(change.amount) > 0 ? '+' : ''}{(parseInt(change.amount) / 1_000_000_000).toFixed(6)} ONE
                     </p>
                   ))}
                 </div>
@@ -198,7 +198,7 @@ const ActivityTab: React.FC = () => {
         <p>
           Showing recent transactions • 
           <a 
-            href={`https://onescan.cc/address/${currentAccount.address}`}
+            href={`https://onescan.cc/testnet/account?address=${currentAccount.address}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ marginLeft: '0.5rem', color: '#3b82f6' }}
