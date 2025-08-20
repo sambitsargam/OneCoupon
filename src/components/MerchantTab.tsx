@@ -21,6 +21,7 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
   const [result, setResult] = useState<string | null>(null);
   const [merchantCreating, setMerchantCreating] = useState(false);
   const [merchantCreated, setMerchantCreated] = useState(false);
+  const [merchantSkipped, setMerchantSkipped] = useState(false); // Track if user skipped waiting
 
   // Package ID from environment
   const packageId = import.meta.env.VITE_PACKAGE_ID;
@@ -51,6 +52,7 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
       // Small delay to show the success message briefly
       const timer = setTimeout(() => {
         setMerchantCreated(false);
+        setMerchantSkipped(true); // Mark as completed
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -136,8 +138,20 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
       return;
     }
 
-    if (merchantObjects.length === 0) {
+    if (merchantObjects.length === 0 && !merchantSkipped) {
       setResult('Please create a merchant account first');
+      return;
+    }
+
+    // If user skipped but merchant objects still not available, try to refetch
+    if (merchantObjects.length === 0 && merchantSkipped) {
+      setResult('Merchant account not yet confirmed on blockchain. Trying to refresh...');
+      refetchObjects();
+      setTimeout(() => {
+        if (merchantObjects.length === 0) {
+          setResult('Merchant account still not confirmed. Please wait a moment and try again, or refresh the page.');
+        }
+      }, 3000);
       return;
     }
 
@@ -212,8 +226,8 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
     );
   }
 
-  // If no merchant account exists, show merchant creation
-  if (merchantObjects.length === 0 && !merchantCreated) {
+  // If no merchant account exists and user hasn't created/skipped, show merchant creation
+  if (merchantObjects.length === 0 && !merchantCreated && !merchantSkipped) {
     return (
       <div className="card">
         <h2>Create Merchant Account</h2>
@@ -299,7 +313,10 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
           </button>
           <button
             className="btn btn-primary"
-            onClick={() => setMerchantCreated(false)}
+            onClick={() => {
+              setMerchantCreated(false);
+              setMerchantSkipped(true);
+            }}
           >
             Continue Anyway
           </button>
@@ -312,6 +329,29 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
     <div className="card">
       <h2>Issue New Coupon</h2>
       <p>Create tokenized coupons for your customers</p>
+      
+      {merchantSkipped && merchantObjects.length === 0 && (
+        <div style={{ 
+          background: '#fef3cd', 
+          padding: '1rem', 
+          borderRadius: '0.5rem', 
+          marginBottom: '1.5rem',
+          border: '1px solid #fbbf24'
+        }}>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#92400e' }}>⚠️ Blockchain Sync Pending</h3>
+          <p style={{ margin: '0.5rem 0', color: '#92400e', fontSize: '0.875rem' }}>
+            Your merchant account transaction is still confirming on the blockchain. 
+            You can try issuing a coupon, but if it fails, please wait a moment and try again.
+          </p>
+          <button
+            className="btn btn-secondary"
+            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+            onClick={() => refetchObjects()}
+          >
+            Refresh Status
+          </button>
+        </div>
+      )}
       
       <div style={{ 
         background: '#f8fafc', 
