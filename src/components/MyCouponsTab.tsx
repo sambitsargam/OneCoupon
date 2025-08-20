@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useCurrentAccount } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSuiClientQuery, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
+import { Transaction } from '@onelabs/sui/transactions';
 
 interface Coupon {
   id: string;
@@ -9,6 +10,7 @@ interface Coupon {
   used: number;
   expiresAt: number;
   merchant: string;
+  owner: string;
 }
 
 interface MyCouponsTabProps {
@@ -17,17 +19,22 @@ interface MyCouponsTabProps {
 
 const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
   const currentAccount = useCurrentAccount();
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [orderTotal, setOrderTotal] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
 
-  // Query for owned coupon objects (currently unused, replace mock data when ready)
-  /*
-  const { data: ownedObjects } = useSuiClientQuery(
+  // Package ID from environment
+  const packageId = import.meta.env.VITE_PACKAGE_ID;
+
+  // Query for owned coupon objects
+  const { data: ownedObjects, refetch: refetchCoupons } = useSuiClientQuery(
     'getOwnedObjects',
     {
       owner: currentAccount?.address ?? '',
       filter: {
-        StructType: '0x1::coupon::Coupon'
+        StructType: `${packageId}::coupon::Coupon`
       },
       options: {
         showContent: true,
@@ -35,10 +42,26 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
       }
     },
     {
-      enabled: !!currentAccount?.address
+      enabled: !!currentAccount?.address && !!packageId
     }
   );
-  */
+
+  // Parse coupon data from blockchain objects
+  const coupons: Coupon[] = (ownedObjects?.data || []).map((obj: any) => {
+    const fields = obj.data?.content?.fields;
+    if (!fields) return null;
+    
+    return {
+      id: obj.data.objectId,
+      code: new TextDecoder().decode(new Uint8Array(fields.code)),
+      valueBps: parseInt(fields.value_bps),
+      maxUses: parseInt(fields.max_uses),
+      used: parseInt(fields.used),
+      expiresAt: parseInt(fields.expires_at_ms),
+      merchant: fields.merchant,
+      owner: fields.owner
+    };
+  }).filter(Boolean);
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -68,19 +91,13 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
     }
   };
 
-  const handleRedeem = (coupon: Coupon) => {
-    setSelectedCoupon(coupon);
+  const executeRedeem = async () => {
+    await redeemCoupon();
   };
 
-  const executeRedeem = async () => {
-    if (!selectedCoupon || !orderTotal) return;
-
-    // This would execute the redeem transaction
-    console.log('Redeeming coupon:', selectedCoupon.id, 'for order total:', orderTotal);
-    
-    // Reset form
-    setSelectedCoupon(null);
-    setOrderTotal('');
+  const handleRedeem = (coupon: Coupon) => {
+    setSelectedCoupon(coupon);
+    setResult(null); // Clear previous results
   };
 
   if (!currentAccount) {
@@ -92,8 +109,8 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
     );
   }
 
-  // Mock data for demonstration (replace with actual data from ownedObjects)
-  const mockCoupons: Coupon[] = [
+  // Mock data for demonstration (remove when real data is available)
+  const mockCoupons: Coupon[] = coupons.length > 0 ? coupons : [
     {
       id: '0x123...',
       code: 'SAVE20',
@@ -101,7 +118,8 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
       maxUses: 1,
       used: 0,
       expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days from now
-      merchant: '0xabc...'
+      merchant: '0xabc...',
+      owner: currentAccount?.address || ''
     },
     {
       id: '0x456...',
@@ -110,11 +128,57 @@ const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
       maxUses: 3,
       used: 1,
       expiresAt: Date.now() - 24 * 60 * 60 * 1000, // 1 day ago (expired)
-      merchant: '0xdef...'
+      merchant: '0xdef...',
+      owner: currentAccount?.address || ''
     }
   ];
 
-  return (
+  const redeemCoupon = async () => {
+    if (!selectedCoupon || !currentAccount || !packageId || !orderTotal) {
+      setResult('Missing required information for redemption');
+      return;
+    }
+
+    setRedeeming(true);
+    try {
+      const tx = new Transaction();
+      
+      // We need a clock object for timestamp validation
+      // For now, we'll use shared clock at 0x6
+      const clockObjectId = '0x6';
+      
+      tx.moveCall({
+        target: `${packageId}::coupon::redeem`,
+        arguments: [
+          tx.object(selectedCoupon.id), // coupon object
+          tx.pure.u64(Math.floor(parseFloat(orderTotal) * 1_000_000_000)), // order total in MIST
+          tx.object(clockObjectId) // clock
+        ]
+      });
+
+      signAndExecute(
+        { transaction: tx },
+        {
+          onSuccess: (result) => {
+            const discount = (parseFloat(orderTotal) * selectedCoupon.valueBps) / 10000;
+            setResult(`Coupon redeemed successfully! Discount: ${discount.toFixed(3)} OCT. Transaction: ${result.digest}`);
+            setSelectedCoupon(null);
+            setOrderTotal('');
+            refetchCoupons(); // Refresh coupon list
+          },
+          onError: (error) => {
+            console.error('Redemption failed:', error);
+            setResult(`Redemption failed: ${error.message}`);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error redeeming coupon:', error);
+      setResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setRedeeming(false);
+    }
+  };  return (
     <div>
       <div className="card">
         <h2>My Coupons</h2>

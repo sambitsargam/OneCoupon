@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useCurrentAccount } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClientQuery } from '@onelabs/dapp-kit';
+import { Transaction } from '@onelabs/sui/transactions';
 
 interface MerchantTabProps {
   network: 'onechain-testnet' | 'onechain-mainnet';
@@ -7,7 +8,7 @@ interface MerchantTabProps {
 
 const MerchantTab: React.FC<MerchantTabProps> = () => {
   const currentAccount = useCurrentAccount();
-  // const { mutate: signAndExecute } = useSignAndExecuteTransaction(); // For future use
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   
   const [formData, setFormData] = useState({
     recipient: '',
@@ -18,6 +19,31 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [merchantCreating, setMerchantCreating] = useState(false);
+
+  // Package ID from environment
+  const packageId = import.meta.env.VITE_PACKAGE_ID;
+
+  // Query for merchant objects owned by current account
+  const { data: ownedObjects, refetch: refetchObjects } = useSuiClientQuery(
+    'getOwnedObjects',
+    {
+      owner: currentAccount?.address ?? '',
+      filter: {
+        StructType: `${packageId}::coupon::Merchant`
+      },
+      options: {
+        showContent: true,
+        showType: true
+      }
+    },
+    {
+      enabled: !!currentAccount?.address && !!packageId
+    }
+  );
+
+  const merchantObjects = ownedObjects?.data || [];
+  const hasMerchant = merchantObjects.length > 0;
 
   const generateRandomCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -28,49 +54,82 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
     setFormData(prev => ({ ...prev, code: result }));
   };
 
+  const createMerchant = async () => {
+    if (!currentAccount || !packageId) {
+      setResult('Please connect your wallet and ensure package is deployed');
+      return;
+    }
+
+    setMerchantCreating(true);
+    try {
+      const tx = new Transaction();
+      
+      tx.moveCall({
+        target: `${packageId}::coupon::create_merchant`,
+        arguments: []
+      });
+
+      signAndExecute(
+        { transaction: tx },
+        {
+          onSuccess: (result) => {
+            setResult(`Merchant created successfully! Transaction: ${result.digest}`);
+            refetchObjects(); // Refresh the merchant objects
+          },
+          onError: (error) => {
+            console.error('Merchant creation failed:', error);
+            setResult(`Merchant creation failed: ${error.message}`);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error creating merchant:', error);
+      setResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setMerchantCreating(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentAccount) {
-      alert('Please connect your wallet first');
+    if (!currentAccount || !packageId) {
+      setResult('Please connect your wallet and ensure package is deployed');
+      return;
+    }
+
+    if (merchantObjects.length === 0) {
+      setResult('Please create a merchant account first');
       return;
     }
 
     setLoading(true);
     try {
-      // Mock transaction for now - replace with actual Move call when contract is deployed
-      const mockTxDigest = `0x${Math.random().toString(16).slice(2)}`;
-      
-      // Simulate transaction execution
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setResult(`Coupon issued successfully! Transaction: ${mockTxDigest}`);
-      setFormData({
-        recipient: '',
-        code: '',
-        valueBps: '',
-        maxUses: '',
-        expiryDate: ''
-      });
-      
-      /*
-      // Actual implementation when Move package is deployed:
       const tx = new Transaction();
       
+      // Convert expiry date to milliseconds
+      const expiryMs = new Date(formData.expiryDate).getTime();
+      
+      // Get merchant object ID
+      const merchantObjectId = merchantObjects[0].data?.objectId;
+      
+      if (!merchantObjectId) {
+        throw new Error('Merchant object not found');
+      }
+      
       tx.moveCall({
-        target: `0x1::coupon::issue`,
+        target: `${packageId}::coupon::issue`,
         arguments: [
-          tx.pure.address(formData.recipient),
-          tx.pure.vector('u8', Array.from(new TextEncoder().encode(formData.code))),
-          tx.pure.u16(parseInt(formData.valueBps)),
-          tx.pure.u8(parseInt(formData.maxUses)),
-          tx.pure.u64(expiryMs)
+          tx.object(merchantObjectId), // merchant object
+          tx.pure.address(formData.recipient), // to
+          tx.pure.vector('u8', Array.from(new TextEncoder().encode(formData.code))), // code
+          tx.pure.u16(parseInt(formData.valueBps)), // value_bps
+          tx.pure.u8(parseInt(formData.maxUses)), // max_uses
+          tx.pure.u64(expiryMs) // expires_at_ms
         ]
       });
 
       signAndExecute(
-        {
-          transaction: tx,
-        },
+        { transaction: tx },
         {
           onSuccess: (result) => {
             setResult(`Coupon issued successfully! Transaction: ${result.digest}`);
@@ -88,7 +147,6 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
           }
         }
       );
-      */
     } catch (error) {
       console.error('Error:', error);
       setResult(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -106,10 +164,77 @@ const MerchantTab: React.FC<MerchantTabProps> = () => {
     );
   }
 
+  if (!packageId) {
+    return (
+      <div className="card">
+        <h2>Issue Coupons</h2>
+        <p>Package not deployed. Please check your environment configuration.</p>
+      </div>
+    );
+  }
+
+  // If no merchant account exists, show merchant creation
+  if (merchantObjects.length === 0) {
+    return (
+      <div className="card">
+        <h2>Create Merchant Account</h2>
+        <p>You need to create a merchant account before you can issue coupons.</p>
+        
+        <div style={{ 
+          background: '#f0fdf4', 
+          padding: '1rem', 
+          borderRadius: '0.5rem', 
+          marginBottom: '1.5rem',
+          border: '1px solid #bbf7d0'
+        }}>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#166534' }}>What is a Merchant Account?</h3>
+          <ul style={{ margin: 0, color: '#065f46' }}>
+            <li>A smart contract object that authorizes you to issue coupons</li>
+            <li>Only the merchant admin (you) can issue coupons from this account</li>
+            <li>This is a one-time setup per merchant</li>
+          </ul>
+        </div>
+
+        <button 
+          className={`btn btn-primary ${merchantCreating ? 'loading' : ''}`}
+          onClick={createMerchant}
+          disabled={merchantCreating}
+          style={{ width: '100%', marginBottom: '1rem' }}
+        >
+          {merchantCreating ? 'Creating Merchant Account...' : 'Create Merchant Account'}
+        </button>
+
+        {result && (
+          <div style={{ 
+            padding: '1rem', 
+            borderRadius: '0.375rem',
+            background: result.includes('success') ? '#f0fdf4' : '#fef2f2',
+            color: result.includes('success') ? '#166534' : '#dc2626'
+          }}>
+            {result}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="card">
       <h2>Issue New Coupon</h2>
       <p>Create tokenized coupons for your customers</p>
+      
+      <div style={{ 
+        background: '#f8fafc', 
+        padding: '1rem', 
+        borderRadius: '0.5rem', 
+        marginBottom: '1.5rem',
+        border: '1px solid #e2e8f0'
+      }}>
+        <h3 style={{ margin: '0 0 0.5rem 0', color: '#374151' }}>Merchant Account</h3>
+        <p style={{ margin: 0, fontSize: '0.875rem', color: '#6b7280' }}>
+          ✅ Active • {merchantObjects[0]?.data?.objectId?.slice(0, 8)}...{merchantObjects[0]?.data?.objectId?.slice(-6)}
+        </p>
+      </div>
       
       <form onSubmit={handleSubmit}>
         <div className="form-group">
