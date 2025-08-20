@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useCurrentAccount } from '@onelabs/dapp-kit';
 
 interface MerchantTabProps {
-  network: 'testnet' | 'mainnet';
+  network: 'onechain-testnet' | 'onechain-mainnet';
 }
 
 const MerchantTab: React.FC<MerchantTabProps> = () => {

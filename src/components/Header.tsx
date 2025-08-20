@@ -1,9 +1,9 @@
 import React from 'react';
-import { useCurrentAccount, useConnectWallet, useDisconnectWallet, useWallets } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useConnectWallet, useDisconnectWallet, useWallets, useSuiClient } from '@onelabs/dapp-kit';
 
 interface HeaderProps {
-  network: 'testnet' | 'mainnet';
-  onNetworkChange: (network: 'testnet' | 'mainnet') => void;
+  network: 'onechain-testnet' | 'onechain-mainnet';
+  onNetworkChange: (network: 'onechain-testnet' | 'onechain-mainnet') => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ network, onNetworkChange }) => {
@@ -11,13 +11,26 @@ const Header: React.FC<HeaderProps> = ({ network, onNetworkChange }) => {
   const { mutate: connect } = useConnectWallet();
   const { mutate: disconnect } = useDisconnectWallet();
   const wallets = useWallets();
+  const suiClient = useSuiClient();
 
   const handleConnect = () => {
     const firstWallet = wallets[0];
     if (firstWallet) {
+      console.log('Connecting to wallet:', firstWallet.name);
+      console.log('Current network configuration:', network);
       connect({ wallet: firstWallet });
+    } else {
+      console.log('No wallets found');
     }
   };
+
+  // Log current network info
+  React.useEffect(() => {
+    if (suiClient) {
+      console.log('OneChain client initialized');
+      console.log('Current network:', network);
+    }
+  }, [suiClient, network]);
 
   const copyAddress = async () => {
     if (currentAccount?.address) {
@@ -45,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ network, onNetworkChange }) => {
           OneCoupon
         </h1>
         <p style={{ margin: 0, color: '#6b7280', fontSize: '0.875rem' }}>
-          Tokenized Retail Coupons on OneChain
+          Tokenized Retail Coupons on OneChain {network === 'onechain-testnet' ? '(Testnet)' : '(Mainnet)'}
         </p>
       </div>
 
@@ -53,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({ network, onNetworkChange }) => {
         {/* Network Selector */}
         <select 
           value={network} 
-          onChange={(e) => onNetworkChange(e.target.value as 'testnet' | 'mainnet')}
+          onChange={(e) => onNetworkChange(e.target.value as 'onechain-testnet' | 'onechain-mainnet')}
           style={{
             padding: '0.5rem',
             borderRadius: '0.375rem',
@@ -61,8 +74,8 @@ const Header: React.FC<HeaderProps> = ({ network, onNetworkChange }) => {
             background: 'white'
           }}
         >
-          <option value="testnet">Testnet</option>
-          <option value="mainnet">Mainnet</option>
+          <option value="onechain-testnet">OneChain Testnet</option>
+          <option value="onechain-mainnet">OneChain Mainnet</option>
         </select>
 
         {/* Wallet Connection */}

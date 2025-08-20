@@ -12,7 +12,7 @@ interface Coupon {
 }
 
 interface MyCouponsTabProps {
-  network: 'testnet' | 'mainnet';
+  network: 'onechain-testnet' | 'onechain-mainnet';
 }
 
 const MyCouponsTab: React.FC<MyCouponsTabProps> = () => {
