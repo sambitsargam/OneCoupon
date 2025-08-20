@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCurrentAccount, useConnectWallet, useDisconnectWallet, useWallets } from '@mysten/dapp-kit';
+import { useCurrentAccount, useConnectWallet, useDisconnectWallet, useWallets } from '@onelabs/dapp-kit';
 
 interface HeaderProps {
   network: 'testnet' | 'mainnet';

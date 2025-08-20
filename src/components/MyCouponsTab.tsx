@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCurrentAccount } from '@mysten/dapp-kit';
+import { useCurrentAccount } from '@onelabs/dapp-kit';
 
 interface Coupon {
   id: string;

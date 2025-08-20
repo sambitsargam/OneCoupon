@@ -1,4 +1,4 @@
-import { createNetworkConfig } from '@mysten/dapp-kit';
+import { createNetworkConfig } from '@onelabs/dapp-kit';
 
 export type Network = 'testnet' | 'mainnet';
 

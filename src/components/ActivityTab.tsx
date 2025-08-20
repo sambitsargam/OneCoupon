@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCurrentAccount, useSuiClientQuery } from '@mysten/dapp-kit';
+import { useCurrentAccount, useSuiClientQuery } from '@onelabs/dapp-kit';
 
 const ActivityTab: React.FC = () => {
   const currentAccount = useCurrentAccount();
