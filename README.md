@@ -2,6 +2,14 @@
 
 OneCoupon is a full-stack decentralized application (dApp) for tokenized retail coupons built on OneChain blockchain. Merchants can issue on-chain coupons, and users can hold them in their wallets and redeem them through smart contract calls.
 
+## 📦 Deployed Package
+
+**OneChain Testnet Package ID**: `0x4f16f91c358d5cfcfc7044ca0478881a33a937ce0b7c90096e96a9a6712427a8`
+
+- **Network**: OneChain Testnet
+- **Explorer**: [View on OneChain Explorer](https://onescan.cc/testnet/package/0x4f16f91c358d5cfcfc7044ca0478881a33a937ce0b7c90096e96a9a6712427a8)
+- **Module**: `onecoupon::coupon`
+
 ## 🌟 Features
 
 - **Merchant Coupon Issuance**: Create tokenized coupons with customizable discount values, usage limits, and expiry dates
@@ -84,7 +92,7 @@ one client faucet
 
 # Update environment with package ID
 # Copy the package ID from publish output to .env file
-echo "VITE_PACKAGE_ID=<your-package-id>" >> .env
+echo "VITE_PACKAGE_ID=0x4f16f91c358d5cfcfc7044ca0478881a33a937ce0b7c90096e96a9a6712427a8" >> .env
 ```
 
 ### Run the Frontend
@@ -135,7 +143,7 @@ VITE_TESTNET_RPC_URL=https://rpc-testnet.onelabs.cc/v1
 VITE_MAINNET_RPC_URL=https://rpc-mainnet.onelabs.cc/v1
 
 # Package ID (set after deployment)
-VITE_PACKAGE_ID=
+VITE_PACKAGE_ID=0x4f16f91c358d5cfcfc7044ca0478881a33a937ce0b7c90096e96a9a6712427a8
 
 # Default network
 VITE_DEFAULT_NETWORK=testnet
